@@ -1,0 +1,103 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  OPERATOR
+  VIEWER
+}
+
+enum DeploymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  ROLLED_BACK
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  fullName     String
+  email        String   @unique
+  passwordHash String
+  role         Role
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  deployments  Deployment[] @relation("UserDeployments")
+  auditLogs    AuditLog[]
+}
+
+model Service {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  repoUrl     String?
+  ownerTeam   String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  deployments Deployment[]
+}
+
+model Environment {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  clusterName String?
+  namespace   String?
+  baseUrl     String?
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  deployments Deployment[]
+}
+
+model Deployment {
+  id                      Int               @id @default(autoincrement())
+  serviceId               Int
+  environmentId           Int
+  deployedByUserId        Int
+  version                 String
+  imageTag                String?
+  commitHash              String?
+  status                  DeploymentStatus
+  releaseNote             String?
+  deploymentTime          DateTime @default(now())
+  isRollback              Boolean  @default(false)
+  rollbackFromDeploymentId Int?
+
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  service     Service     @relation(fields: [serviceId], references: [id])
+  environment Environment @relation(fields: [environmentId], references: [id])
+  deployedBy  User        @relation("UserDeployments", fields: [deployedByUserId], references: [id])
+
+  rollbackFrom Deployment? @relation("RollbackRelation", fields: [rollbackFromDeploymentId], references: [id])
+  rolledBackBy Deployment[] @relation("RollbackRelation")
+}
+
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  action     String
+  entityType String
+  entityId   Int?
+  oldValue   Json?
+  newValue   Json?
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
