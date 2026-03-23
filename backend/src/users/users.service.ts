@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -28,11 +29,13 @@ export class UsersService {
       throw new BadRequestException('Bu email zaten kullanımda.');
     }
 
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+
     return this.prisma.user.create({
       data: {
         fullName: data.fullName,
         email: data.email,
-        passwordHash: data.password,
+        passwordHash: hashedPassword,
       },
       select: {
         id: true,
