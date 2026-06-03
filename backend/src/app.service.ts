@@ -1,9 +1,20 @@
 // DB'den veri çeken
 
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from './prisma/prisma.service';
 
 @Injectable()
+export class AppService {
+  getHello() {
+    return {
+      message: 'Deploy Track API is running',
+      version: '1.0.0',
+      status: 'OK',
+    };
+  }
+}
+
+/*
+import { PrismaService } from './prisma/prisma.service';
 export class AppService {
   constructor(private readonly prisma: PrismaService) {}
 
@@ -24,3 +35,4 @@ export class AppService {
     };
   }
 }
+*/
