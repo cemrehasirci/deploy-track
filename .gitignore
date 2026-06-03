@@ -1,2 +1,6 @@
 /.vscode/
 /docs/notes/
+
+.env
+.env.*
+!.env.example
