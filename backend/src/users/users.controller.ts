@@ -40,6 +40,12 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
+  @Roles(Role.ADMIN)
+  @Get('inactive')
+  async findInactive(@Req() req: AuthenticatedRequest) {
+    return this.usersService.findInactive(req.user);
+  }
+
   @Roles(Role.ADMIN, Role.OPERATOR)
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number) {

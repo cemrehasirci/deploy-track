@@ -43,6 +43,24 @@ export class UsersService {
     });
   }
 
+  async findInactive(currentUser: AuthenticatedUser) {
+    if (!currentUser.isSystemAdmin) {
+      throw new ForbiddenException(
+        'Pasif kullanıcıları sadece sistem admin listeleyebilir.',
+      );
+    }
+
+    return this.prisma.user.findMany({
+      where: {
+        isActive: false,
+      },
+      orderBy: {
+        id: 'asc',
+      },
+      select: this.userSelect,
+    });
+  }
+
   async findOne(id: number) {
     const user = await this.prisma.user.findFirst({
       where: {
