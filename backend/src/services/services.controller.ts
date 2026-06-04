@@ -34,13 +34,13 @@ export class ServicesController {
     return this.servicesService.findOne(id);
   }
 
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.OPERATOR)
   @Post()
   async create(@Body() body: CreateServiceDto) {
     return this.servicesService.create(body);
   }
 
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.OPERATOR)
   @Patch(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
