@@ -17,7 +17,9 @@ The project is built with NestJS, PostgreSQL, Prisma, JWT authentication, and ro
 - PostgreSQL integration with Prisma ORM
 - Dockerized PostgreSQL setup
 - Service Management module
-- Soft delete support for services
+- Environment Management module
+- DTO-based request validation
+- Soft delete support for services and environments
 
 ---
 
@@ -62,18 +64,62 @@ Service deletion is handled as soft delete by setting `isActive` to `false`. Thi
 
 ---
 
+## Environment Management
+
+The Environment Management module is used to define deployment environments such as development, staging, and production.
+
+An environment can represent a Kubernetes namespace, cluster target, or application runtime environment.
+
+### Environment Fields
+
+| Field | Description |
+|---|---|
+| `name` | Environment name |
+| `clusterName` | Optional cluster name |
+| `namespace` | Optional Kubernetes namespace |
+| `baseUrl` | Optional environment base URL |
+| `description` | Optional environment description |
+| `isActive` | Used for soft delete |
+
+### Environment Endpoints
+
+| Method | Endpoint | Roles | Description |
+|---|---|---|---|
+| `GET` | `/environments` | `ADMIN`, `OPERATOR`, `VIEWER` | List active environments |
+| `GET` | `/environments/:id` | `ADMIN`, `OPERATOR`, `VIEWER` | Get environment detail |
+| `POST` | `/environments` | `ADMIN`, `OPERATOR` | Create a new environment |
+| `PATCH` | `/environments/:id` | `ADMIN`, `OPERATOR` | Update an environment |
+| `DELETE` | `/environments/:id` | `ADMIN` | Soft delete an environment |
+
+### Example Environment Request
+
+```json
+{
+  "name": "staging",
+  "clusterName": "aks-staging-cluster",
+  "namespace": "deploy-track-staging",
+  "baseUrl": "https://staging.example.com",
+  "description": "Staging environment"
+}
+```
+
+Environment deletion is handled as soft delete by setting `isActive` to `false`. This keeps future deployment history records safe.
+
+---
+
 ## Roles
 
 | Role | Description |
 |---|---|
-| `ADMIN` | Can manage users and has full access to service management |
-| `OPERATOR` | Can view, create, and update services, but cannot delete services or manage users |
+| `ADMIN` | Can manage users and has full access to service and environment management |
+| `OPERATOR` | Can view, create, and update services/environments, but cannot delete them or manage users |
 | `VIEWER` | Can only view allowed resources |
+
 ---
 
 ## Planned Features
 
-- Environment management
+- User management improvements
 - Deployment history tracking
 - Deployment status management
 - Rollback relationships
@@ -106,6 +152,7 @@ deploy-track/
 │   │   └── seed.ts
 │   └── src/
 │       ├── auth/
+│       ├── environments/
 │       ├── prisma/
 │       ├── services/
 │       └── users/
