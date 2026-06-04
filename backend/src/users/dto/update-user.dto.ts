@@ -1,5 +1,6 @@
 import { Role } from '@prisma/client';
 import {
+  IsBoolean,
   IsEmail,
   IsEnum,
   IsOptional,
@@ -36,4 +37,8 @@ export class UpdateUserDto {
     message: 'Geçerli bir rol seçiniz.',
   })
   role?: Role;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 }

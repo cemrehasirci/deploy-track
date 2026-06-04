@@ -7,8 +7,10 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Req,
   UseGuards,
 } from '@nestjs/common';
+import { Request } from 'express';
 import { Role } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -16,6 +18,15 @@ import { RolesGuard } from '../auth/roles.guard';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersService } from './users.service';
+
+type AuthenticatedRequest = Request & {
+  user: {
+    userId: number;
+    email: string;
+    role: Role;
+    isSystemAdmin: boolean;
+  };
+};
 
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -44,12 +55,16 @@ export class UsersController {
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() body: UpdateUserDto,
+    @Req() req: AuthenticatedRequest,
   ) {
-    return this.usersService.update(id, body);
+    return this.usersService.update(id, body, req.user);
   }
 
   @Delete(':id')
-  async remove(@Param('id', ParseIntPipe) id: number) {
-    return this.usersService.remove(id);
+  async remove(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.usersService.remove(id, req.user);
   }
 }

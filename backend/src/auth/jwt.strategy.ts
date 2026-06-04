@@ -7,6 +7,7 @@ type AppJwtPayload = {
   sub: number;
   email: string;
   role: string;
+  isSystemAdmin: boolean;
 };
 
 @Injectable()
@@ -24,6 +25,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       userId: payload.sub,
       email: payload.email,
       role: payload.role,
+      isSystemAdmin: payload.isSystemAdmin,
     };
   }
 }

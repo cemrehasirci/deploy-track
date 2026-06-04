@@ -1,13 +1,21 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+
+type AuthenticatedUser = {
+  userId: number;
+  email: string;
+  role: string;
+  isSystemAdmin: boolean;
+};
 
 @Injectable()
 export class UsersService {
@@ -75,8 +83,43 @@ export class UsersService {
     });
   }
 
-  async update(id: number, data: UpdateUserDto) {
-    await this.findOne(id);
+  async update(
+    id: number,
+    data: UpdateUserDto,
+    currentUser: AuthenticatedUser,
+  ) {
+    const targetUser = await this.prisma.user.findUnique({
+      where: {
+        id,
+      },
+    });
+
+    if (!targetUser) {
+      throw new NotFoundException('Kullanıcı bulunamadı.');
+    }
+
+    const isProtectedAdmin = targetUser.isSystemAdmin;
+    const isCurrentUserSystemAdmin = currentUser.isSystemAdmin;
+
+    if (isProtectedAdmin && !isCurrentUserSystemAdmin) {
+      throw new ForbiddenException('System admin kullanıcısı değiştirilemez.');
+    }
+
+    if (!targetUser.isActive && !isCurrentUserSystemAdmin) {
+      throw new ForbiddenException(
+        'Pasif kullanıcıları sadece System admin güncelleyebilir.',
+      );
+    }
+
+    if (isProtectedAdmin) {
+      if (data.role && data.role !== 'ADMIN') {
+        throw new ForbiddenException('System admin rolü değiştirilemez.');
+      }
+
+      if (data.isActive === false) {
+        throw new ForbiddenException('System admin pasif hale getirilemez.');
+      }
+    }
 
     if (data.email) {
       const existingUser = await this.prisma.user.findUnique({
@@ -104,6 +147,10 @@ export class UsersService {
       updateData.role = data.role;
     }
 
+    if (data.isActive !== undefined) {
+      updateData.isActive = data.isActive;
+    }
+
     if (data.password !== undefined) {
       updateData.passwordHash = await bcrypt.hash(data.password, 10);
     }
@@ -117,8 +164,29 @@ export class UsersService {
     });
   }
 
-  async remove(id: number) {
-    await this.findOne(id);
+  async remove(id: number, currentUser: AuthenticatedUser) {
+    const targetUser = await this.prisma.user.findUnique({
+      where: {
+        id,
+      },
+    });
+
+    if (!targetUser) {
+      throw new NotFoundException('Kullanıcı bulunamadı.');
+    }
+
+    const isProtectedAdmin = targetUser.isSystemAdmin;
+    const isCurrentUserSystemAdmin = currentUser.isSystemAdmin;
+
+    if (isProtectedAdmin) {
+      throw new ForbiddenException('System admin kullanıcısı silinemez.');
+    }
+
+    if (!targetUser.isActive && !isCurrentUserSystemAdmin) {
+      throw new ForbiddenException(
+        'Pasif kullanıcıları sadece ana admin silebilir.',
+      );
+    }
 
     return this.prisma.user.update({
       where: {

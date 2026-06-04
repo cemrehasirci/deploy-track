@@ -27,12 +27,16 @@ async function main() {
       passwordHash: hashedPassword,
       role: Role.ADMIN,
       fullName: 'Admin User',
+      isActive: true,
+      isSystemAdmin: true,
     },
     create: {
       fullName: 'Admin User',
       email: 'admin@test.com',
       passwordHash: hashedPassword,
       role: Role.ADMIN,
+      isActive: true,
+      isSystemAdmin: true,
     },
   });
 
